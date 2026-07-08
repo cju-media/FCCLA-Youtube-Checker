@@ -49,6 +49,14 @@ def main():
 <head>
     <meta http-equiv="refresh" content="0; url={redirect_url}">
     <title>Redirecting...</title>
+    <script>
+        // Use window.location.href to ensure JavaScript also triggers a redirect
+        window.location.href = "{redirect_url}";
+        // Attempt to close the window after a short delay (useful on mobile when app opens)
+        setTimeout(function() {{
+            window.close();
+        }}, 2000);
+    </script>
 </head>
 <body>
     <p>If you are not redirected, <a href="{redirect_url}">click here</a>.</p>
