@@ -2,7 +2,7 @@ name: Fetch YouTube Playlist
 
 on:
   schedule:
-    - cron: '0 * * * *' # Every hour
+    - cron: '27 * * * *' # Every hour at 27 past
   workflow_dispatch: # Allow manual trigger
 
 permissions:
