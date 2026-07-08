@@ -7,19 +7,27 @@ url = 'https://www.youtube.com/playlist?list=PLGtiSp5WvUc_I0M_vvfSdGY9dJ43ZofXs'
 def get_latest_video_id():
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     html = urllib.request.urlopen(req).read().decode('utf-8')
+
+    # Try parsing JSON first
     match = re.search(r'var ytInitialData = ({.*?});</script>', html)
     if match:
-        data = json.loads(match.group(1))
-        # The playlist items are listed in order, we can assume the first item is the newest
-        # because the user mentioned "newest video by publish date" and playlists are usually sorted.
-        # But wait, looking at the UI, the first item *is* the newest one ("2 days ago").
-        contents = data['contents']['twoColumnBrowseResultsRenderer']['tabs'][0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents']
-        for item in contents:
-            if 'lockupViewModel' in item:
-                return item['lockupViewModel']['contentId']
-            # Fallback for old renderer format
-            if 'playlistVideoRenderer' in item:
-                return item['playlistVideoRenderer']['videoId']
+        try:
+            data = json.loads(match.group(1))
+            contents = data['contents']['twoColumnBrowseResultsRenderer']['tabs'][0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents']
+            # New renderer format (lockupViewModel)
+            for item in contents:
+                if 'lockupViewModel' in item:
+                    return item['lockupViewModel']['contentId']
+
+            # Old renderer format
+            for item in contents:
+                if 'playlistVideoListRenderer' in item:
+                    videos = item['playlistVideoListRenderer']['contents']
+                    for video in videos:
+                        if 'playlistVideoRenderer' in video:
+                            return video['playlistVideoRenderer']['videoId']
+        except Exception as e:
+            print("Failed to parse JSON:", e)
 
     # Fallback to simple regex if JSON parsing fails
     match = re.search(r'"videoId":"(.*?)"', html)
