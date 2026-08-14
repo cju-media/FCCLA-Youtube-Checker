@@ -102,9 +102,15 @@
   "20251228": [
     "https://www.youtube.com/watch?v=ZWRCjryL6YQ"
   ],
-  "20251225": [
-    "https://www.youtube.com/watch?v=OkdWYmzSTjk",
-    "https://www.youtube.com/watch?v=6-PP64EvPxI"
+  "20251224": [
+    {
+      "url": "https://www.youtube.com/watch?v=OkdWYmzSTjk",
+      "start_ts": 1766643793
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=6-PP64EvPxI",
+      "start_ts": 1766633160
+    }
   ],
   "20251221": [
     "https://www.youtube.com/watch?v=cJjLfacRdcA"
@@ -146,8 +152,14 @@
     "https://www.youtube.com/watch?v=-aOv2ZlNbmo"
   ],
   "20250921": [
-    "https://www.youtube.com/watch?v=io8_3tWC9Ec",
-    "https://www.youtube.com/watch?v=b64BDWq4C00"
+    {
+      "url": "https://www.youtube.com/watch?v=io8_3tWC9Ec",
+      "start_ts": 1758487236
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=b64BDWq4C00",
+      "start_ts": 1758475449
+    }
   ],
   "20250914": [
     "https://www.youtube.com/watch?v=jVpfHn_NU5M"
@@ -424,9 +436,15 @@
   "20231231": [
     "https://www.youtube.com/watch?v=PZ2AqG-W-lw"
   ],
-  "20231225": [
-    "https://www.youtube.com/watch?v=vGKy-ABOVJk",
-    "https://www.youtube.com/watch?v=DFBm2iLv_8Y"
+  "20231224": [
+    {
+      "url": "https://www.youtube.com/watch?v=vGKy-ABOVJk",
+      "start_ts": 1703485515
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=DFBm2iLv_8Y",
+      "start_ts": 1703474153
+    }
   ],
   "20231217": [
     "https://www.youtube.com/watch?v=Eh17nzFc2e0"
@@ -918,9 +936,18 @@
     "https://www.youtube.com/watch?v=Z7VFdGpTNKo"
   ],
   "20201224": [
-    "https://www.youtube.com/watch?v=sIyaJ3vjNAE",
-    "https://www.youtube.com/watch?v=tEA_M5K3WmI",
-    "https://www.youtube.com/watch?v=XCEU5eTY6IE"
+    {
+      "url": "https://www.youtube.com/watch?v=sIyaJ3vjNAE",
+      "start_ts": 1608876924
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=tEA_M5K3WmI",
+      "start_ts": 1608866132
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=XCEU5eTY6IE",
+      "start_ts": 1608856211
+    }
   ],
   "20201220": [
     "https://www.youtube.com/watch?v=xvBHLBVTTws"

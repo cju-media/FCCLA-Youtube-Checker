@@ -2,9 +2,12 @@ import json
 import subprocess
 import os
 import re
+import datetime
+from zoneinfo import ZoneInfo
 
 PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLGtiSp5WvUc_I0M_vvfSdGY9dJ43ZofXs"
 OUTPUT_FILE = "data/playlist_streams.json"
+SERVICE_TZ = ZoneInfo("America/Los_Angeles")
 
 def get_recent_playlist_videos():
     print("Fetching recent playlist items with flat-playlist...")
@@ -50,6 +53,54 @@ def fetch_video_metadata_with_ios_client(url):
             pass
     return None
 
+def entry_url(entry):
+    """Each dated bucket's entries are either a bare URL string (legacy data,
+    or a video we never got timing metadata for) or a {"url", "start_ts"}
+    dict. This normalizes either shape down to just the URL."""
+    return entry['url'] if isinstance(entry, dict) else entry
+
+
+def entry_start_ts(entry):
+    return entry.get('start_ts') if isinstance(entry, dict) else None
+
+
+def resolve_date_str(metadata):
+    """Picks the date bucket (YYYYMMDD) a video should file under.
+
+    yt-dlp's release_date/upload_date are UTC-based, so an evening Pacific
+    stream (e.g. an 8pm or 11pm Christmas Eve service) rolls into the next
+    UTC calendar day -- which then can't be found by an OW page looking up
+    its own (Pacific, same-day) date. Preferring the Pacific-local date
+    derived from the stream's actual start_ts keeps the bucket aligned with
+    the calendar day the service naming convention (and everyone watching)
+    actually uses. Only matters for evening streams; morning/midday
+    services land on the same UTC and Pacific date either way.
+    """
+    if metadata:
+        start_ts = metadata.get('release_timestamp') or metadata.get('timestamp')
+        if start_ts:
+            try:
+                dt = datetime.datetime.fromtimestamp(int(start_ts), SERVICE_TZ)
+                return dt.strftime('%Y%m%d')
+            except (ValueError, OSError, OverflowError):
+                pass
+        return metadata.get('release_date') or metadata.get('upload_date')
+    return None
+
+
+def make_entry(url, metadata):
+    """Builds a playlist_streams.json entry, attaching the stream's actual
+    start time (epoch seconds) when yt-dlp metadata for it is available.
+    This is what lets a date with multiple services (e.g. two Christmas Eve
+    candlelight services) be told apart by time of day downstream."""
+    start_ts = None
+    if metadata:
+        start_ts = metadata.get('release_timestamp') or metadata.get('timestamp')
+    if start_ts:
+        return {'url': url, 'start_ts': start_ts}
+    return url
+
+
 def extract_date_from_title(title):
     if not isinstance(title, str):
         return None
@@ -81,9 +132,9 @@ def process_videos():
             pass
 
     existing_urls = set()
-    for urls in existing_data.values():
-        for u in urls:
-            existing_urls.add(u)
+    for entries in existing_data.values():
+        for e in entries:
+            existing_urls.add(entry_url(e))
 
     processed = {}
     fetch_limit = 50
@@ -99,17 +150,15 @@ def process_videos():
             continue
 
         metadata = fetch_video_metadata_with_ios_client(url)
-        date_str = None
-        if metadata:
-            date_str = metadata.get('release_date') or metadata.get('upload_date')
+        date_str = resolve_date_str(metadata)
 
         fetched_count += 1
 
         if date_str:
             if date_str not in processed:
                 processed[date_str] = []
-            if url not in processed[date_str]:
-                processed[date_str].append(url)
+            if url not in {entry_url(e) for e in processed[date_str]}:
+                processed[date_str].append(make_entry(url, metadata))
         else:
             still_zero.append(url)
 
@@ -131,11 +180,11 @@ def process_videos():
         # Completely new video
         title = video.get('title', '')
         date_str = None
+        metadata = None
 
         if fetched_count < fetch_limit:
             metadata = fetch_video_metadata_with_ios_client(url)
-            if metadata:
-                date_str = metadata.get('release_date') or metadata.get('upload_date')
+            date_str = resolve_date_str(metadata)
             fetched_count += 1
 
         if not date_str:
@@ -148,20 +197,22 @@ def process_videos():
         if date_str not in processed:
             processed[date_str] = []
 
-        if url not in processed[date_str]:
-            processed[date_str].append(url)
+        if url not in {entry_url(e) for e in processed[date_str]}:
+            processed[date_str].append(make_entry(url, metadata))
 
     # 3. Merge everything back together
     # Add items that were successfully processed out of "0"
-    for date_str, urls in existing_data.items():
+    for date_str, entries in existing_data.items():
         if date_str == "0":
             continue
         if date_str not in processed:
-            processed[date_str] = urls
+            processed[date_str] = entries
         else:
-            for url in urls:
-                if url not in processed[date_str]:
-                    processed[date_str].append(url)
+            existing_keys = {entry_url(e) for e in processed[date_str]}
+            for e in entries:
+                if entry_url(e) not in existing_keys:
+                    processed[date_str].append(e)
+                    existing_keys.add(entry_url(e))
 
     # Handle the remaining "0" backlog
     # Any new videos that landed in "0" will be in processed["0"]
